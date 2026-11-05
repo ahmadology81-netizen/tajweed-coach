@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tajweed Coach - Al-Fatihah Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f1;--card:#ffffff;--ink:#1c1b18;--muted:#6b675f;--line:#e4e1d8;--accent:#1f6f54;--accent-ink:#ffffff;--ok:#1f7a4d;--err:#c62828;--errbg:#fde7e7;--cur:#d9a400;--chip:#f0eee7}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1c1f25;--ink:#ecebe6;--muted:#9a9a93;--line:#2b2f37;--accent:#4fb58a;--accent-ink:#0b1a13;--ok:#5cc58f;--err:#ff6b6b;--errbg:#3a1d1f;--cur:#e8b923;--chip:#262a32}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
+header{padding:20px 20px 4px;max-width:1200px;margin:0 auto}
+h1{font-size:1.35rem;margin:0;font-weight:600}
+h1 .tag{font-size:.75rem;font-weight:500;color:var(--muted);margin-left:8px}
+main{max-width:1200px;margin:0 auto;padding:12px 20px 40px;display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:960px){main{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}.controls,.notes{grid-column:1 / -1}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
+select,button,textarea{font:inherit;color:var(--ink)}
+select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;min-width:120px}
+button.primary.live{background:var(--err);border-color:var(--err);color:#fff}
+.check{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink)}
+.status{margin-left:auto;font-size:.85rem;color:var(--muted)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--chip);font-size:.78rem}
+.pill.live{background:var(--errbg);color:var(--err)}
+.banner{grid-column:1 / -1;background:var(--errbg);color:var(--err);border-radius:10px;padding:10px 14px;font-size:.88rem;display:none}
+.quran{direction:rtl;text-align:right;font-family:'Amiri Quran','Scheherazade New','Traditional Arabic',serif;font-size:2.15rem;line-height:2.7}
+.quran .ayah{display:block}
+.w{display:inline-block;padding:0 6px;margin:0 1px;border-radius:8px;cursor:pointer;border-bottom:3px solid transparent;transition:background .15s}
+.w:hover{background:var(--chip)}
+.w.ok{color:var(--ok)}
+.w.seen{color:var(--ink);background:var(--chip)}
+.w.bad{background:var(--errbg);color:var(--err);border-bottom-color:var(--err)}
+.w.bad.skipped{border-bottom-style:dashed}
+.w.cur{border-bottom-color:var(--cur)}
+.w.focus{outline:2px solid var(--accent);outline-offset:1px}
+.end{font-size:1.5rem;color:var(--muted);margin:0 4px}
+.legend{direction:ltr;font-family:Inter,sans-serif;font-size:.78rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.heard{direction:ltr;margin-top:10px;font-size:.85rem;color:var(--muted);min-height:1.3em}
+.heard span{direction:rtl;unicode-bidi:plaintext;font-family:'Amiri Quran',serif;font-size:1.05rem;color:var(--ink)}
+h2{font-size:1rem;margin:0 0 8px;font-weight:600}
+.mlist{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.mitem{display:flex;gap:10px;align-items:center;text-align:left;width:100%;padding:8px 10px}
+.mitem.on{border-color:var(--err);background:var(--errbg)}
+.mitem .ar{font-family:'Amiri Quran',serif;font-size:1.4rem;direction:rtl}
+.mitem small{color:var(--muted)}
+.big{font-family:'Amiri Quran',serif;font-size:2.4rem;direction:rtl;line-height:1.6}
+.muted{color:var(--muted);font-size:.85rem}
+.rule{border-left:3px solid var(--accent);padding:2px 0 2px 10px;margin:8px 0}
+.rule b{font-size:.88rem}
+.rule p{margin:2px 0 0;font-size:.84rem;color:var(--muted)}
+.rule .x{color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.steps{margin:6px 0 0 18px;padding:0;font-size:.88rem}
+.notes details{font-size:.88rem}
+.notes summary{cursor:pointer;font-weight:600}
+.notes ul{margin:8px 0 0 18px;padding:0}
+textarea{width:100%;min-height:54px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card);direction:rtl;font-family:'Amiri Quran',serif;font-size:1.2rem}
+.sum{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;margin-bottom:8px}
+.sum b{font-weight:600}
+.audioerr{color:var(--err);font-size:.82rem}
+
+.w.snd{background:var(--errbg);color:var(--ink);border-bottom:3px dotted var(--err)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:.85rem;margin:4px 0 8px}
+.kv span{color:var(--muted)}
+.soundcard{grid-column:1 / -1}
+.soundcard canvas{width:100%;height:130px;display:block;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+.soundcard table{width:100%;border-collapse:collapse;font-size:.85rem}
+.soundcard th,.soundcard td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+.soundcard tr[data-wi]{cursor:pointer}.soundcard tr[data-wi]:hover{background:var(--chip)}
+.soundcard td.ar{font-family:'Amiri Quran',serif;font-size:1.3rem;direction:rtl}
+.tablewrap{max-height:320px;overflow:auto}
+.soundcard button:disabled{opacity:.45;cursor:default}
+
+button,select{min-height:44px}
+@media (max-width:600px){
+  .quran{font-size:1.75rem;line-height:2.5}
+  #btnStart{width:100%;min-height:52px;font-size:1.05rem}
+  .soundcard .row button{flex:1 1 100%}
+}
+.micbox{flex:1 1 100%;border:1px solid var(--line);border-radius:12px;padding:8px 12px}.micsw input{width:22px;height:22px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;flex:1 1 45%;text-align:center}.howto{font-size:.9rem}.howto li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tajweed Coach <span class="tag">Al-Fatihah prototype v2 - for personal testing</span></h1>
+</header>
+<main>
+  <div class="banner" id="banner"></div>
+
+  <section class="card controls">
+    <button class="primary" id="btnStart">Start reciting</button>
+    <button id="btnReset">Reset</button>
+    <label class="field">From ayah
+      <select id="from"></select></label>
+    <label class="field">To ayah
+      <select id="to"></select></label>
+    <div class="micbox"><label class="check micsw"><input type="checkbox" id="micSwitch" checked> <b id="micLabel">Microphone: On</b></label><div class="muted" id="micNote"></div></div>
+    <div class="micbox"><b>No microphone permission? Analyze a recording</b>
+      <div class="muted">Works even when opened from WhatsApp. Recite the whole selected range, then check the sound rules.</div>
+      <div class="row"><label class="btn" id="lblRec">Record with phone recorder<input type="file" id="fileRec" accept="audio/*" capture hidden></label>
+      <label class="btn" id="lblPick">Pick an audio file<input type="file" id="filePick" accept="audio/*,.m4a,.mp3,.wav,.ogg,.opus,.aac" hidden></label></div>
+      <div class="muted" id="fileNote"></div></div>
+    <label class="field">Mode
+      <select id="mode">
+        <option value="both" selected>Words + sound</option>
+        <option value="sound">Sound only (results when you stop)</option>
+        <option value="words">Words only</option>
+      </select></label>
+    <label class="field">Sensitivity
+      <select id="sens">
+        <option value="strict">Strict</option>
+        <option value="normal" selected>Normal</option>
+        <option value="lenient">Lenient</option>
+      </select></label>
+    <label class="field">Reciter for corrections
+      <select id="reciter">
+        <option value="Alafasy_128kbps">Mishary Alafasy</option>
+        <option value="Husary_Muallim_128kbps">Al-Husary (teaching, slow)</option>
+        <option value="Husary_128kbps">Al-Husary (murattal)</option>
+        <option value="Minshawy_Murattal_128kbps">Al-Minshawi (murattal)</option>
+        <option value="Abdul_Basit_Murattal_192kbps">Abdul Basit (murattal)</option>
+        <option value="Abdurrahmaan_As-Sudais_192kbps">Al-Sudais</option>
+      </select></label>
+    <label class="check"><input type="checkbox" id="beepOn" checked> Beep on mistake</label>
+    <label class="check"><input type="checkbox" id="extras"> Flag extra words</label>
+    <label class="check"><input type="checkbox" id="soundOn" checked> Sound analysis (experimental)</label>
+    <label class="check"><input type="checkbox" id="beepSnd" checked> Beep on sound mistakes</label>
+    <div class="status"><span class="pill" id="statePill">Idle</span></div>
+  </section>
+
+  <section class="card">
+    <div class="sum" id="sum"></div>
+    <div class="quran" id="quran" dir="rtl"></div>
+    <div class="legend">
+      <span style="color:var(--ok)">green = read correctly</span>
+      <span style="color:var(--err)">red = mistake (dashed = skipped word)</span>
+      <span>yellow underline = next word expected</span>
+      <span style="color:var(--err)">dotted red = sound mistake</span>
+      <span>click any word for its tajweed notes</span>
+    </div>
+    <div class="heard">Heard: <span id="heard"></span></div>
+    <div style="margin-top:14px">
+      <div class="muted" style="margin-bottom:4px">Test without a microphone: type or paste what was recited, then press Check.</div>
+      <textarea id="typed" placeholder="بسم الله الرحمن الرحيم الحمد لله رب العالمين ..."></textarea>
+      <div class="row"><button id="btnCheck">Check typed text</button></div>
+    </div>
+  </section>
+
+  <aside class="card" id="panel"></aside>
+
+  <section class="card soundcard" id="soundCard">
+    <h2>Sound analysis (experimental)</h2>
+    <div class="muted" id="soundStatus"></div>
+    <canvas id="tl"></canvas>
+    <div class="row">
+      <button id="btnPlayOwn" disabled>Play my recording</button>
+      <button id="btnWav" disabled>Download recording (WAV)</button>
+      <button id="btnJson" disabled>Download analysis (JSON)</button>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Word</th><th></th><th>Check</th><th>Measured</th><th>Expected</th><th>Result</th></tr></thead>
+      <tbody id="soundRows"></tbody>
+    </table></div>
+    <div class="muted" style="margin-top:6px">Timeline: your loudness over time; boxes are detected vowels (green = ok, red = mistake), with the measured length in counts above each lengthened vowel.</div>
+  </section>
+
+  <section class="card notes">
+    <details open>
+      <summary>Testing on an Android phone (read first)</summary>
+      <ol class="howto">
+        <li>Open this page in <b>Chrome</b> from an <b>https://</b> link, and allow the microphone when asked.</li>
+        <li>Start with <b>Words + sound</b>. If it says the microphone is busy, or no words appear, switch Mode to <b>Sound only</b> (records, then checks when you press Stop) or <b>Words only</b>.</li>
+        <li>Word checking sends your audio to Google's speech service, so it needs internet. Sound analysis runs on the phone.</li>
+        <li>Use a quiet room, hold the phone about 20 cm away, recite the whole range, then press Stop.</li>
+        <li>Reciter clips stream from the internet. Use the download buttons to send a recording and analysis back for tuning.</li>
+        <li>This is an untested prototype on real voices. Treat flags as hints and confirm with a teacher.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>What the sound analysis checks, and what it cannot</summary>
+      <ul>
+        <li><b>Madd length:</b> natural (2 counts), lazim (6 counts), the stopping madd ('arid, 2/4/6, kept consistent) and short vowels stretched too long. Lengths are measured against your own short vowels, so your pace does not matter.</li>
+        <li><b>Heavy and light letters:</b> the vowel next to a heavy letter (ص ط ض غ ق and a heavy ra') should sit lower in pitch-colour (second formant) than your own light vowels; the lam of Allah after a kasra should not. Needs a few light vowels as a baseline.</li>
+        <li><b>Ghunnah:</b> a clear mim or nun (izhar, as in عَلَيْهِمْ غَيْرِ and أَنْعَمْتَ) must stay short with no extra nasal sound.</li>
+        <li><b>Qalqalah:</b> Al-Fatihah has no qalqalah, so nothing is checked here. A burst detector exists in the engine for other surahs but is not part of this prototype.</li>
+        <li><b>Not measured:</b> exact articulation points (makharij) and the subtle letter attributes (sifat), hiding of the mim before waw (ikhfa), and ra' tarqiq next to a heavy letter. No recording-based method here can judge them reliably; compare with the reciter clips and a teacher.</li>
+        <li><b>Accuracy:</b> the engine was tested on synthetic speech with known lengths and formants, not yet on real recitation. Expect false alarms and misses at first. Use headphones, a quiet room and a decent microphone. Lower the Sensitivity to Lenient if it flags correct recitation, and use the downloads to share a recording and analysis so thresholds can be tuned.</li>
+        <li><b>Learning:</b> this is a practice aid, not a replacement for a qualified teacher (talaqqi).</li>
+      </ul>
+    </details>
+  </section>
+</main>
+
+<script>
+/*CORE-START*/
+const RULES={
+  IDGH_SHAMSI:['Idgham shamsi (الإدغام الشمسي)','The lam of "al-" is not pronounced; the next letter is doubled (shaddah).'],
+  QAMARI:['Izhar qamari (الإظهار القمري)','The lam of "al-" is pronounced clearly.'],
+  MADD_ASLI:['Madd asli (المد الأصلي)','Natural lengthening: exactly 2 counts, no more and no less.'],
+  MADD_ARID:['Madd \'arid lil-sukun (العارض للسكون)','If you stop on this word, the last letter becomes sakin: lengthen the madd letter 2, 4 or 6 counts and keep the same length through the whole recitation.'],
+  MADD_LAZIM:['Madd lazim kalimi muthaqqal (المد اللازم الكلمي المثقل)','A madd letter followed by a doubled letter in the same word: exactly 6 counts.'],
+  LAM_TARQIQ:['Lam of the Name Allah - tarqiq (ترقيق)','After a kasra the lam of Allah is light (thin), not heavy.'],
+  RA_TAFKHIM:['Ra\' - tafkhim (تفخيم الراء)','A ra\' with fatha or damma is heavy (full mouth).'],
+  RA_TARQIQ:['Ra\' - tarqiq (ترقيق الراء)','A ra\' with kasra is light (thin).'],
+  TAFKHIM:['Isti\'la\' letters - heavy (الاستعلاء)','The letters خ ص ض غ ط ق ظ are pronounced heavy: back of the tongue rises toward the palate.'],
+  IZHAR_HALQI:['Izhar halqi (الإظهار الحلقي)','Nun sakinah before a throat letter (ء ه ع ح غ خ) is pronounced clearly, with no ghunnah.'],
+  IZHAR_SHAFAWI:['Izhar shafawi (الإظهار الشفوي)','Mim sakinah before any letter except ب and م is pronounced clearly. Take extra care before و and ف: do not hide it.'],
+  SHADDAH:['Doubled letter (shaddah)','Pronounce the letter twice as one strong, pressed sound.'],
+  LIN:['Lin letter (حرف اللين)','Waw or ya sakinah after a fatha. It is only lengthened (2/4/6) when you stop on the word.'],
+  HAMZAT_WASL:['Hamzat al-wasl (همزة الوصل)','Dropped when you connect from the previous word; pronounced only when you begin with this word.'],
+  HAMZAT_QAT:['Hamzat al-qat\' (همزة القطع)','Always pronounced, whether you start or connect.'],
+  SAFIR:['Safir letter (حرف الصفير)','ص ز س carry a clear whistling sound.'],
+  MAKHRAJ:['Makhraj (مخرج الحرف)','Point of articulation.']
+};
+const R=(k,x)=>({k,x:x||''});
+const RAHMAN=()=>[R('IDGH_SHAMSI'),R('RA_TAFKHIM','ra has fatha'),R('SHADDAH','ra is doubled'),R('MAKHRAJ','ح from the middle of the throat'),R('MADD_ASLI','the alif after م')];
+const RAHEEM=()=>[R('IDGH_SHAMSI'),R('RA_TAFKHIM','ra has fatha'),R('SHADDAH','ra is doubled'),R('MADD_ARID','the ya before the final م')];
+const SURAH=[
+ {n:1,words:[
+  {t:'بِسْمِ',tr:'bismi',r:[R('SAFIR','س')]},
+  {t:'ٱللَّهِ',tr:'Allāhi',r:[R('HAMZAT_WASL'),R('LAM_TARQIQ'),R('SHADDAH','lam is doubled')]},
+  {t:'ٱلرَّحْمَٰنِ',tr:'ar-Raḥmāni',r:RAHMAN()},
+  {t:'ٱلرَّحِيمِ',tr:'ar-Raḥīm',r:RAHEEM()}]},
+ {n:2,words:[
+  {t:'ٱلْحَمْدُ',tr:'al-ḥamdu',r:[R('QAMARI'),R('MAKHRAJ','ح from the middle of the throat, thin and soft')]},
+  {t:'لِلَّهِ',tr:'li-llāhi',r:[R('LAM_TARQIQ'),R('SHADDAH','lam is doubled')]},
+  {t:'رَبِّ',tr:'rabbi',r:[R('RA_TAFKHIM','ra has fatha'),R('SHADDAH','ba is doubled')]},
+  {t:'ٱلْعَٰلَمِينَ',tr:'al-ʿālamīn',r:[R('QAMARI'),R('MAKHRAJ','ع from the middle of the throat'),R('MADD_ASLI','the alif after ع'),R('MADD_ARID','the ya before the final ن')]}]},
+ {n:3,words:[
+  {t:'ٱلرَّحْمَٰنِ',tr:'ar-Raḥmāni',r:RAHMAN()},
+  {t:'ٱلرَّحِيمِ',tr:'ar-Raḥīm',r:RAHEEM()}]},
+ {n:4,words:[
+  {t:'مَٰلِكِ',tr:'Māliki',r:[R('MADD_ASLI','the alif after م (Hafs reads Māliki)')]},
+  {t:'يَوْمِ',tr:'yawmi',r:[R('LIN','waw after fatha: no madd while connected')]},
+  {t:'ٱلدِّينِ',tr:'ad-dīn',r:[R('IDGH_SHAMSI'),R('SHADDAH','dal is doubled'),R('MADD_ARID','the ya before the final ن')]}]},
+ {n:5,words:[
+  {t:'إِيَّاكَ',tr:'iyyāka',r:[R('HAMZAT_QAT'),R('SHADDAH','ya is doubled'),R('MADD_ASLI','the alif after يّ')]},
+  {t:'نَعْبُدُ',tr:'naʿbudu',r:[R('MAKHRAJ','ع from the middle of the throat; clear, not swallowed')]},
+  {t:'وَإِيَّاكَ',tr:'wa-iyyāka',r:[R('HAMZAT_QAT'),R('SHADDAH','ya is doubled'),R('MADD_ASLI','the alif after يّ')]},
+  {t:'نَسْتَعِينُ',tr:'nastaʿīn',r:[R('SAFIR','س'),R('MAKHRAJ','ع from the middle of the throat'),R('MADD_ARID','the ya before the final ن')]}]},
+ {n:6,words:[
+  {t:'ٱهْدِنَا',tr:'ihdinā',r:[R('HAMZAT_WASL','if you begin here, start with a kasra'),R('MAKHRAJ','ه from the deepest part of the throat'),R('MADD_ASLI','the alif after ن')]},
+  {t:'ٱلصِّرَٰطَ',tr:'aṣ-ṣirāṭa',r:[R('IDGH_SHAMSI'),R('TAFKHIM','ص and ط are heavy'),R('RA_TARQIQ','ra has kasra'),R('SHADDAH','ص is doubled'),R('MADD_ASLI','the alif after ر')]},
+  {t:'ٱلْمُسْتَقِيمَ',tr:'al-mustaqīm',r:[R('QAMARI'),R('SAFIR','س'),R('TAFKHIM','ق is heavy'),R('MADD_ARID','the ya before the final م')]}]},
+ {n:7,words:[
+  {t:'صِرَٰطَ',tr:'ṣirāṭa',r:[R('TAFKHIM','ص and ط are heavy'),R('RA_TARQIQ','ra has kasra'),R('MADD_ASLI','the alif after ر')]},
+  {t:'ٱلَّذِينَ',tr:'alladhīna',r:[R('IDGH_SHAMSI'),R('SHADDAH','ذ is doubled')]},
+  {t:'أَنْعَمْتَ',tr:'anʿamta',r:[R('HAMZAT_QAT'),R('IZHAR_HALQI','the nun sakinah before ع'),R('MAKHRAJ','ع from the middle of the throat')]},
+  {t:'عَلَيْهِمْ',tr:'ʿalayhim',r:[R('LIN','ya after fatha'),R('IZHAR_SHAFAWI','the mim sakinah before غ')]},
+  {t:'غَيْرِ',tr:'ghayri',r:[R('TAFKHIM','غ is heavy'),R('LIN','ya after fatha'),R('RA_TARQIQ','ra has kasra')]},
+  {t:'ٱلْمَغْضُوبِ',tr:'al-maghḍūbi',r:[R('QAMARI'),R('TAFKHIM','غ and ض are heavy'),R('MADD_ASLI','the waw after ض')]},
+  {t:'عَلَيْهِمْ',tr:'ʿalayhim',r:[R('LIN','ya after fatha'),R('IZHAR_SHAFAWI','the mim sakinah before و: do not hide it')]},
+  {t:'وَلَا',tr:'wa-lā',r:[R('MADD_ASLI','the alif after ل')]},
+  {t:'ٱلضَّآلِّينَ',tr:'aḍ-ḍāllīn',r:[R('IDGH_SHAMSI'),R('TAFKHIM','ض is heavy'),R('MADD_LAZIM','the alif before the doubled ل: 6 counts'),R('MADD_ARID','the ya before the final ن')]}]}
+];
+
+function norm(s){
+  return s.replace(/[\u0640\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g,'')
+          .replace(/[\u0671\u0623\u0625\u0622]/g,'\u0627')
+          .replace(/\u0649/g,'\u064A').replace(/\u0629/g,'\u0647')
+          .replace(/[^\u0621-\u063A\u0641-\u064A]/g,'');
+}
+function key(s){const n=norm(s);const k=n.replace(/\u0627/g,'');return k||n;}
+function lev(a,b){
+  const m=a.length,n=b.length;if(!m)return n;if(!n)return m;
+  let prev=new Array(n+1),cur=new Array(n+1);
+  for(let j=0;j<=n;j++)prev[j]=j;
+  for(let i=1;i<=m;i++){
+    cur[0]=i;
+    for(let j=1;j<=n;j++){
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+    const t=prev;prev=cur;cur=t;
+  }
+  return prev[n];
+}
+function sim(a,b){if(a===b)return 1;const L=Math.max(a.length,b.length);return L?1-lev(a,b)/L:1;}
+function isMatch(a,b,thr){
+  if(a===b)return true;
+  if(Math.min(a.length,b.length)<=2)return false;
+  return sim(a,b)>=thr;
+}
+function align(exp,recKeys,recRaw,thr){
+  const n=exp.length,m=recKeys.length;
+  const D=[],B=[];
+  for(let j=0;j<=m;j++){D.push(new Array(n+1).fill(0));B.push(new Array(n+1).fill(0));}
+  for(let i=1;i<=n;i++){D[0][i]=i;B[0][i]=3;}
+  for(let j=1;j<=m;j++){D[j][0]=j;B[j][0]=2;}
+  for(let j=1;j<=m;j++){
+    for(let i=1;i<=n;i++){
+      const sub=D[j-1][i-1]+(isMatch(recKeys[j-1],exp[i-1],thr)?0:1);
+      const del=D[j][i-1]+1;
+      const ins=D[j-1][i]+1;
+      let best=sub,b=1;
+      if(del<best){best=del;b=3;}
+      if(ins<best){best=ins;b=2;}
+      D[j][i]=best;B[j][i]=b;
+    }
+  }
+  let bestI=0,bestC=D[m][0];
+  for(let i=1;i<=n;i++){if(D[m][i]<=bestC){bestC=D[m][i];bestI=i;}}
+  const status=new Array(n).fill('pending'),heard=new Array(n).fill(''),extras=[];
+  let j=m,i=bestI;
+  while(j>0||i>0){
+    const b=B[j][i];
+    if(j>0&&i>0&&b===1){
+      status[i-1]=isMatch(recKeys[j-1],exp[i-1],thr)?'ok':'sub';
+      heard[i-1]=recRaw[j-1];j--;i--;
+    }else if(j>0&&(b===2||i===0)){
+      extras.push({after:i-1,tok:recRaw[j-1]});j--;
+    }else{
+      status[i-1]='del';i--;
+    }
+  }
+  extras.reverse();
+  return {status,heard,extras,end:bestI,cost:bestC};
+}
+/*CORE-END*/
+/* ===== Sound analysis core: pure DSP + rule logic (no DOM). Runs in browser and Node. ===== */
+const SRATE=16000,HOP=160,WIN=400,NFFT=512,FRAME_S=HOP/SRATE;
+const EDGE_L=0.02;          // seconds lost at the -6 dB edges of a vowel; added back when converting to counts
+const PAUSE_FR=30;          // 300 ms of no vowel = a pause
+const NASAL_R=4.0;          // low-band / rest ratio that marks a nasal murmur
+const VOICE_MIN=0.42;       // normalised autocorrelation needed to call a frame voiced
+
+const HANN=new Float64Array(WIN),HAMM=new Float64Array(WIN);
+for(let i=0;i<WIN;i++){HANN[i]=0.5-0.5*Math.cos(2*Math.PI*i/(WIN-1));HAMM[i]=0.54-0.46*Math.cos(2*Math.PI*i/(WIN-1));}
+const FCOS=new Float64Array(NFFT/2),FSIN=new Float64Array(NFFT/2);
+for(let k=0;k<NFFT/2;k++){FCOS[k]=Math.cos(2*Math.PI*k/NFFT);FSIN[k]=-Math.sin(2*Math.PI*k/NFFT);}
+function fftInPlace(re,im){
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+  for(let len=2;len<=n;len<<=1){
+    const half=len>>1,step=n/len;
+    for(let i=0;i<n;i+=len){
+      for(let k=0;k<half;k++){
+        const wr=FCOS[k*step],wi=FSIN[k*step],a=i+k,b=a+half;
+        const xr=re[b]*wr-im[b]*wi,xi=re[b]*wi+im[b]*wr;
+        re[b]=re[a]-xr;im[b]=im[a]-xi;re[a]+=xr;im[a]+=xi;
+      }
+    }
+  }
+}
+function median(a){if(!a.length)return NaN;const b=Array.from(a).sort((x,y)=>x-y);const m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2;}
+function percentile(a,p){if(!a.length)return NaN;const b=Array.from(a).sort((x,y)=>x-y);return b[Math.min(b.length-1,Math.max(0,Math.floor(p*(b.length-1))))];}
+
+const _re=new Float64Array(NFFT),_im=new Float64Array(NFFT),_pre=new Float64Array(WIN+1);
+function analyzeFrame(x,off){
+  let e=0;_pre[0]=0;
+  for(let i=0;i<WIN;i++){const v=x[off+i];e+=v*v;_pre[i+1]=e;}
+  const dB=10*Math.log10(e/WIN+1e-12);
+  let best=0;
+  if(e/WIN>1e-9){
+    for(let lag=40;lag<=200;lag++){
+      let r=0;
+      for(let i=0;i+lag<WIN;i++)r+=x[off+i]*x[off+i+lag];
+      const e1=_pre[WIN-lag],e2=_pre[WIN]-_pre[lag];
+      const nr=r/Math.sqrt(e1*e2+1e-12);
+      if(nr>best)best=nr;
+    }
+  }
+  for(let i=0;i<WIN;i++){_re[i]=x[off+i]*HANN[i];_im[i]=0;}
+  for(let i=WIN;i<NFFT;i++){_re[i]=0;_im[i]=0;}
+  fftInPlace(_re,_im);
+  let b1=0,b2=0,b3=0,b4=0;
+  for(let k=1;k<256;k++){
+    const p=_re[k]*_re[k]+_im[k]*_im[k];
+    if(k<=11)b1+=p;else if(k<=32)b2+=p;else if(k<=96)b3+=p;else b4+=p;
+  }
+  const tot=b1+b2+b3+b4+1e-12;
+  return {dB,v:best,R:b1/(b2+b3+b4+1e-12),hi:b4/tot};
+}
+
+class Sound{
+  constructor(){
+    this.x=new Float32Array(SRATE*60);this.len=0;this.nF=0;this.masks=[];
+    this.F={dB:[],v:[],R:[],hi:[]};
+  }
+  push(chunk){
+    if(this.len+chunk.length>this.x.length){
+      const nx=new Float32Array(Math.max(this.x.length*2,this.len+chunk.length));
+      nx.set(this.x.subarray(0,this.len));this.x=nx;
+    }
+    this.x.set(chunk,this.len);this.len+=chunk.length;
+    while(this.nF*HOP+WIN<=this.len){
+      const f=analyzeFrame(this.x,this.nF*HOP);
+      this.F.dB.push(f.dB);this.F.v.push(f.v);this.F.R.push(f.R);this.F.hi.push(f.hi);
+      this.nF++;
+    }
+  }
+  tNow(){return this.len/SRATE;}
+  mask(t0,t1){this.masks.push([t0,t1]);}
+}
+
+/* ---- LPC formants (used for heavy/light checks) ---- */
+function polyRoots(c){
+  const n=c.length-1,zr=new Float64Array(n),zi=new Float64Array(n);
+  for(let k=0;k<n;k++){const ang=2*Math.PI*k/n+0.4;zr[k]=0.9*Math.cos(ang);zi[k]=0.9*Math.sin(ang);}
+  for(let it=0;it<200;it++){
+    let maxd=0;
+    for(let k=0;k<n;k++){
+      let pr=c[0],pi=0;
+      for(let m=1;m<=n;m++){const tr=pr*zr[k]-pi*zi[k]+c[m];const ti=pr*zi[k]+pi*zr[k];pr=tr;pi=ti;}
+      let dr=1,di=0;
+      for(let j=0;j<n;j++){if(j===k)continue;const ar=zr[k]-zr[j],ai=zi[k]-zi[j];const tr=dr*ar-di*ai;di=dr*ai+di*ar;dr=tr;}
+      const den=dr*dr+di*di+1e-300;
+      const qr=(pr*dr+pi*di)/den,qi=(pi*dr-pr*di)/den;
+      zr[k]-=qr;zi[k]-=qi;maxd=Math.max(maxd,Math.abs(qr)+Math.abs(qi));
+    }
+    if(maxd<1e-9)break;
+  }
+  return {zr,zi};
+}
+function lpcFormants(x,off,order){
+  order=order||14;
+  const s=new Float64Array(WIN);
+  for(let i=0;i<WIN;i++){const prev=(off+i>0)?x[off+i-1]:0;s[i]=(x[off+i]-0.97*prev)*HAMM[i];}
+  const r=new Float64Array(order+1);
+  for(let k=0;k<=order;k++){let a=0;for(let i=k;i<WIN;i++)a+=s[i]*s[i-k];r[k]=a;}
+  if(r[0]<=1e-12)return null;
+  r[0]*=1.0001;
+  let a=new Float64Array(order+1);a[0]=1;let err=r[0];
+  for(let i=1;i<=order;i++){
+    let acc=r[i];for(let j=1;j<i;j++)acc+=a[j]*r[i-j];
+    const k=-acc/err;const tmp=a.slice();
+    for(let j=1;j<i;j++)a[j]=tmp[j]+k*tmp[i-j];
+    a[i]=k;err*=(1-k*k);if(err<=0)break;
+  }
+  const {zr,zi}=polyRoots(Array.from(a));
+  const fr=[];
+  for(let k=0;k<zr.length;k++){
+    if(zi[k]<=0.01)continue;
+    const f=Math.atan2(zi[k],zr[k])*SRATE/(2*Math.PI);
+    const bw=-Math.log(Math.hypot(zr[k],zi[k]))*SRATE/Math.PI;
+    if(f>150&&f<SRATE/2-200&&bw<500)fr.push(f);
+  }
+  fr.sort((p,q)=>p-q);
+  let F1=null,F2=null;
+  for(const f of fr){if(F1===null){if(f>=200&&f<=1100)F1=f;}else if(F2===null&&f>F1+250){if(f<=3300)F2=f;break;}}
+  return (F1&&F2)?[F1,F2]:null;
+}
+function nucFormants(snd,n){
+  const len=n.t1-n.t0+1,a=n.t0+Math.floor(len*0.3),b=n.t0+Math.ceil(len*0.7);
+  const f1=[],f2=[];
+  for(let t=a;t<=Math.max(a,b);t++){
+    if(t*HOP+WIN>snd.len)break;
+    const fm=lpcFormants(snd.x,t*HOP);if(fm){f1.push(fm[0]);f2.push(fm[1]);}
+  }
+  if(f1.length<2)return null;
+  return {F1:median(f1),F2:median(f2)};
+}
+
+/* ---- Frame classification and vowel-nucleus detection ---- */
+function prepareFrames(snd){
+  const T=snd.nF,F=snd.F,dB=F.dB;
+  const floor=percentile(dB,0.10),peak=percentile(dB,0.95);
+  const thr=Math.max(floor+8,peak-32);
+  const voiced=new Uint8Array(T),nasal=new Uint8Array(T);
+  for(let t=0;t<T;t++){
+    const tt=t*FRAME_S;let m=false;
+    for(const mk of snd.masks){if(tt>=mk[0]&&tt<=mk[1]){m=true;break;}}
+    if(m)continue;
+    const vs=Math.max(F.v[t],t>0?F.v[t-1]:0,t+1<T?F.v[t+1]:0);
+    if(vs>VOICE_MIN&&dB[t]>thr){voiced[t]=1;if(F.R[t]>NASAL_R&&dB[t]<peak-3)nasal[t]=1;}
+  }
+  return {T,dB,floor,peak,thr,voiced,nasal};
+}
+function detectNuclei(P){
+  const {T,dB,voiced,nasal,floor}=P;
+  const s2=new Float64Array(T).fill(-200);
+  const son=t=>(voiced[t]&&!nasal[t])?dB[t]:-200;
+  for(let t=0;t<T;t++){
+    if(son(t)<-100)continue;
+    let a=son(t),n=1;
+    if(t>0&&son(t-1)>-100){a+=son(t-1);n++;}
+    if(t+1<T&&son(t+1)>-100){a+=son(t+1);n++;}
+    s2[t]=a/n;
+  }
+  const runs=[];let t=0;
+  while(t<T){
+    if(s2[t]<-100){t++;continue;}
+    const a=t;let b=t;
+    for(;;){
+      let k=b+1,g=0;
+      while(k<T&&s2[k]<-100&&g<3){k++;g++;}
+      if(k<T&&s2[k]>-100)b=k;else break;
+    }
+    runs.push([a,b]);t=b+1;
+  }
+  const nuclei=[];
+  for(const [a,b] of runs){
+    if(b-a+1<4)continue;
+    const sv=i=>s2[i]>-100?s2[i]:floor-5;
+    let peaks=[];
+    for(let i=a;i<=b;i++){
+      const l=i>a?sv(i-1):-1e9,r=i<b?sv(i+1):-1e9;
+      if(sv(i)>=l&&sv(i)>r)peaks.push(i);
+    }
+    if(!peaks.length)peaks=[a+((b-a)>>1)];
+    const cand=[];
+    for(const p of peaks){
+      let lm=sv(p),i=p;while(i>a&&sv(i-1)<=sv(p)){i--;lm=Math.min(lm,sv(i));}
+      let rm=sv(p);i=p;while(i<b&&sv(i+1)<=sv(p)){i++;rm=Math.min(rm,sv(i));}
+      cand.push({p,prom:sv(p)-Math.max(lm,rm)});
+    }
+    let pk=cand.filter(k=>k.prom>=2.5);
+    if(!pk.length){let m=cand[0];for(const k of cand)if(sv(k.p)>sv(m.p))m=k;pk=[m];}
+    for(let q=0;q<pk.length;q++){
+      const p=pk[q].p;let L=a,R=b;
+      if(q>0){const pp=pk[q-1].p;let mi=pp;for(let i=pp;i<=p;i++)if(sv(i)<sv(mi))mi=i;L=mi;}
+      if(q<pk.length-1){const np=pk[q+1].p;let mi=p;for(let i=p;i<=np;i++)if(sv(i)<sv(mi))mi=i;R=mi;}
+      const lvl=sv(p)-6;
+      let l=p;while(l>L&&sv(l-1)>=lvl)l--;
+      let r=p;while(r<R&&sv(r+1)>=lvl)r++;
+      if(r-l+1<4)continue;
+      nuclei.push({t0:l,t1:r,peak:sv(p),dur:(r-l+1)*FRAME_S,tc:(l+r)>>1,pauseAfter:false});
+    }
+  }
+  return nuclei;
+}
+
+/* ---- Expected vowels of Al-Fatihah (Hafs), connected reading ----
+   q: vowel quality, c: counts, ctx: H heavy consonant before / L light,
+   x flags: arid (madd 'arid before a stop), opt (optional), lam (lam of Allah, must be light),
+   izhar (clear nun/mim sakinah follows, no ghunnah) */
+const V=(q,c,ctx,x)=>({q,c,ctx:ctx||'L',x:x||''});
+const CONN=()=>V('?',1,'L','opt conn');
+const VW={
+ '1:1':[V('i',1),V('i',1)],
+ '1:2':[V('a',2,'L','lam'),V('i',1)],
+ '1:3':[V('a',1,'H','ra'),V('a',2),V('i',1)],
+ '1:4':[V('a',1,'H','ra'),V('i',2,'L','arid'),CONN()],
+ '2:1':[V('a',1,'L','opt'),V('a',1),V('u',1)],
+ '2:2':[V('i',1),V('a',2,'L','lam'),V('i',1)],
+ '2:3':[V('a',1,'H','ra'),V('i',1)],
+ '2:4':[V('a',2),V('a',1),V('i',2,'L','arid'),CONN()],
+ '3:1':[V('a',1,'L','opt'),V('a',1,'H','ra'),V('a',2),V('i',1)],
+ '3:2':[V('a',1,'H','ra'),V('i',2,'L','arid'),CONN()],
+ '4:1':[V('a',2),V('i',1),V('i',1)],
+ '4:2':[V('a',1),V('i',1)],
+ '4:3':[V('i',2,'L','arid'),CONN()],
+ '5:1':[V('i',1),V('a',2),V('a',1)],
+ '5:2':[V('a',1),V('u',1),V('u',1)],
+ '5:3':[V('a',1),V('i',1),V('a',2),V('a',1)],
+ '5:4':[V('a',1),V('a',1),V('i',2,'L','arid'),CONN()],
+ '6:1':[V('i',1,'L','opt'),V('i',1),V('a',2)],
+ '6:2':[V('i',1,'H'),V('a',2),V('a',1,'H')],
+ '6:3':[V('u',1),V('a',1),V('i',2,'H','arid'),CONN()],
+ '7:1':[V('i',1,'H'),V('a',2),V('a',1,'H')],
+ '7:2':[V('a',1),V('i',2),V('a',1)],
+ '7:3':[V('a',1),V('a',1),V('a',1)],
+ '7:4':[V('a',1),V('a',1),V('i',1,'L','izhar')],
+ '7:5':[V('a',1,'H'),V('i',1)],
+ '7:6':[V('a',1),V('u',2,'H'),V('i',1)],
+ '7:7':[V('a',1),V('a',1),V('i',1,'L','izhar')],
+ '7:8':[V('a',1),V('a',2)],
+ '7:9':[V('a',6,'H'),V('i',2,'L','arid')]
+};
+function buildExpected(words,limit){
+  const X=[];
+  for(let i=0;i<limit&&i<words.length;i++){
+    const w=words[i],vs=VW[w.ayah+':'+w.pos]||[];
+    for(const v of vs)X.push({t:'v',wi:i,q:v.q,c:v.c,ctx:v.ctx,x:v.x,opt:/opt/.test(v.x)});
+    const next=words[i+1];
+    if(!next||next.ayah!==w.ayah)X.push({t:'p',wi:i,opt:true});
+  }
+  return X;
+}
+function buildDetected(nuclei,T,final){
+  const Y=[];
+  for(let i=0;i<nuclei.length;i++){
+    const n=nuclei[i];
+    Y.push({t:'v',n,i});
+    const nextStart=i+1<nuclei.length?nuclei[i+1].t0:(final?T+100:T);
+    n.pauseAfter=(nextStart-n.t1)>=PAUSE_FR&&(i+1<nuclei.length||final||(T-n.t1)>=PAUSE_FR+10);
+    if(n.pauseAfter)Y.push({t:'p'});
+  }
+  return Y;
+}
+function cnt(dur,u){return (dur+EDGE_L)/(u+EDGE_L);}
+function pairCost(e,n,u){
+  const counts=(/arid/.test(e.x)&&n.pauseAfter)?[2,4,6]:[e.c];
+  let best=9;
+  for(const c of counts){const d=Math.abs(Math.log(cnt(n.dur,u)/c));if(d<best)best=d;}
+  return Math.min(best,2.0);
+}
+function skipExpCost(e){return e.opt?0:(e.t==='p'?0.1:1.2);}
+function alignTokens(X,Y,u){
+  const n=X.length,m=Y.length,D=[],B=[];
+  for(let i=0;i<=n;i++){D.push(new Float64Array(m+1));B.push(new Uint8Array(m+1));}
+  for(let j=1;j<=m;j++){D[0][j]=D[0][j-1]+(Y[j-1].t==='p'?0.1:0.3);B[0][j]=2;}
+  for(let i=1;i<=n;i++){D[i][0]=D[i-1][0]+skipExpCost(X[i-1]);B[i][0]=3;}
+  for(let i=1;i<=n;i++){
+    const e=X[i-1];
+    for(let j=1;j<=m;j++){
+      const y=Y[j-1];let best=Infinity,b=0;
+      if(e.t===y.t){best=D[i-1][j-1]+(e.t==='p'?0:pairCost(e,y.n,u));b=1;}
+      const se=D[i-1][j]+skipExpCost(e);if(se<best){best=se;b=3;}
+      const sd=D[i][j-1]+(y.t==='p'?0.4:1.0);if(sd<best){best=sd;b=2;}
+      D[i][j]=best;B[i][j]=b;
+    }
+  }
+  let bj=0,bc=D[n][0];
+  for(let j=1;j<=m;j++)if(D[n][j]<bc){bc=D[n][j];bj=j;}
+  const pairs=new Array(n).fill(-1);let i=n,j=bj;
+  while(i>0||j>0){
+    const b=B[i][j];
+    if(i>0&&j>0&&b===1){pairs[i-1]=j-1;i--;j--;}
+    else if(j>0&&(b===2||i===0)){j--;}
+    else{i--;}
+  }
+  return pairs;
+}
+function murmurAfter(P,t1){
+  let start=-1;
+  for(let k=t1+1;k<=t1+4&&k<P.T;k++)if(P.nasal[k]){start=k;break;}
+  if(start<0)return 0;
+  let end=start,g=0;
+  for(let k=start+1;k<P.T&&k<start+40;k++){if(P.nasal[k]){end=k;g=0;}else if(++g>2)break;}
+  return (end-start+1)*FRAME_S;
+}
+
+/* ---- Main analysis ---- */
+const DROP_BASE={a:250,i:400,u:150};   // expected F2 drop (Hz) of a heavy vowel vs a light one
+function analyzeSound(snd,words,limit,opts){
+  opts=opts||{};const tol=opts.tol||1,final=!!opts.final;
+  const P=prepareFrames(snd);
+  let nuclei=detectNuclei(P);
+  if(!final)nuclei=nuclei.filter(n=>n.t1<P.T-35);
+  const out={events:[],nuclei,quality:0,u:NaN,status:'ok',T:P.T,P,matches:0};
+  if(nuclei.length<6){out.status='insufficient';return out;}
+  const Y=buildDetected(nuclei,P.T,final),X=buildExpected(words,limit);
+  const nv=X.filter(e=>e.t==='v'&&!e.opt).length;
+  if(nv<3){out.status='waiting';return out;}
+  let u=percentile(nuclei.map(n=>n.dur),0.4),pairs=null;
+  for(let it=0;it<5;it++){
+    pairs=alignTokens(X,Y,u);
+    const shorts=[];
+    X.forEach((e,i)=>{if(e.t==='v'&&e.c===1&&!e.opt&&pairs[i]>=0)shorts.push(Y[pairs[i]].n.dur);});
+    if(shorts.length>=5){const mu=median(shorts);if(Math.abs(mu-u)<1e-4)break;u=mu;}
+  }
+  out.u=u;
+  const matched=[];let good=0;
+  X.forEach((e,i)=>{
+    if(e.t!=='v')return;
+    const j=pairs[i];
+    if(j<0){
+      if(!e.opt&&e.c>=2)out.events.push({wi:e.wi,kind:'madd',status:'unsure',conf:'low',rule:ruleOfVowel(e),
+        title:'Lengthening not found',text:'No lengthened vowel could be found here ('+e.c+' counts expected).',meas:'-',exp:e.c+' counts'});
+      return;
+    }
+    const n=Y[j].n;n.e=e;
+    const cost=pairCost(e,n,u);
+    if(!e.opt&&cost<1.0)good++;
+    matched.push({e,n,cost});
+  });
+  out.matches=matched.length;
+  out.quality=nv?good/nv:0;
+  const lowQ=out.quality<0.55;
+  const confOf=c=>lowQ?'low':(c<1.2?'high':'med');
+  const arid=[];
+  for(const m of matched){
+    const {e,n}=m;
+    m.meas=cnt(n.dur,u);m.cexp=e.c;
+    if(/arid/.test(e.x)&&n.pauseAfter){
+      let bc=2,bd=9;for(const c of [2,4,6]){const d=Math.abs(Math.log(m.meas/c));if(d<bd){bd=d;bc=c;}}
+      m.cexp=bc;arid.push(m);
+    }
+    m.conf=confOf(m.cost);
+  }
+  const lo=1-0.3*tol,hi=1+0.4*tol,addEv=ev=>{out.events.push(ev);};
+  for(const m of matched){
+    const {e,n}=m;
+    if(e.x.indexOf('conn')>=0)continue;
+    const r=m.meas/m.cexp;
+    if(e.c>=2){
+      const ok=r>=lo&&r<=hi;
+      const rule=ruleOfVowel(e);
+      const expTxt=(/arid/.test(e.x)&&n.pauseAfter)?'2, 4 or 6 counts (stopping)':e.c+' counts';
+      addEv({wi:e.wi,kind:'madd',rule,status:ok?'ok':(m.conf==='low'?'unsure':'bad'),conf:m.conf,tc:n.tc,
+        title:'Madd length',
+        text:ok?'Lengthening is about '+m.meas.toFixed(1)+' counts: correct.':
+          'Lengthening measured about '+m.meas.toFixed(1)+' counts ('+(r<1?'too short':'too long')+'); it should be '+expTxt+'.',
+        meas:m.meas.toFixed(1)+' counts',exp:expTxt});
+      n.status=ok?'ok':'bad';
+    }else if(e.c===1&&!e.opt){
+      if(m.meas>2.2*tol){
+        addEv({wi:e.wi,kind:'madd',rule:null,status:m.conf==='low'?'unsure':'bad',conf:m.conf,tc:n.tc,
+          title:'Short vowel held too long',text:'This short vowel measured about '+m.meas.toFixed(1)+' counts; it should be 1 count. Do not stretch it.',
+          meas:m.meas.toFixed(1)+' counts',exp:'1 count'});
+        n.status='bad';
+      }else n.status='ok';
+    }
+  }
+  /* 'arid lengths must be consistent through the recitation */
+  if(arid.length>=3){
+    const med=median(arid.map(m=>m.meas));
+    for(const m of arid){
+      const rr=m.meas/med;
+      if((rr>1.6||rr<1/1.6)&&m.conf!=='low'){
+        addEv({wi:m.e.wi,kind:'madd',rule:'MADD_ARID',status:'bad',conf:'med',tc:m.n.tc,title:"'Arid length not consistent",
+          text:"This stopping-madd measured about "+m.meas.toFixed(1)+" counts but your usual is about "+med.toFixed(1)+". Pick one length (2, 4 or 6) and keep it.",
+          meas:m.meas.toFixed(1)+' counts',exp:'about '+med.toFixed(1)+' counts (your usual)'});
+        m.n.status='bad';
+      }
+    }
+  }
+  /* heavy / light via F2 of the vowel, compared with this speaker's own light vowels */
+  const fm=new Map();
+  for(const m of matched){
+    if(m.e.q==='?')continue;
+    if(m.e.ctx==='H'||m.e.ctx==='L'){
+      if(m.n.dur<0.05)continue;
+      const f=nucFormants(snd,m.n);if(f)fm.set(m,f);
+    }
+  }
+  const base={};
+  for(const q of ['a','i','u']){
+    const arr=[];
+    for(const [m,f] of fm)if(m.e.q===q&&m.e.ctx==='L'&&!/lam/.test(m.e.x))arr.push(f.F2);
+    base[q]=arr.length>=3?median(arr):null;
+  }
+  out.base=base;
+  for(const [m,f] of fm){
+    const {e,n}=m,b=base[e.q];
+    if(b===null)continue;
+    const drop=b-f.F2;const need=DROP_BASE[e.q];
+    if(e.ctx==='H'){
+      const bad=drop<need*0.4/tol;
+      addEv({wi:e.wi,kind:'heavy',rule:/ra/.test(e.x)?'RA_TAFKHIM':'TAFKHIM',status:bad?(m.conf==='low'?'unsure':'bad'):'ok',conf:'low'===m.conf?'low':'med',tc:n.tc,
+        title:'Heavy letter (tafkhim)',
+        text:bad?'The vowel after this heavy letter sounds light: its second formant is '+Math.round(f.F2)+' Hz, only '+Math.round(drop)+' Hz below your light vowels. Raise the back of the tongue and round the sound.':
+          'Sounds heavy: second formant '+Math.round(f.F2)+' Hz, '+Math.round(drop)+' Hz below your light vowels.',
+        meas:Math.round(f.F2)+' Hz (light base '+Math.round(b)+')',exp:'lower than light vowels'});
+      if(bad)n.status='bad';
+    }else if(/lam/.test(e.x)){
+      const bad=drop>need*0.7*tol;
+      addEv({wi:e.wi,kind:'lam',rule:'LAM_TARQIQ',status:bad?(m.conf==='low'?'unsure':'bad'):'ok',conf:'low'===m.conf?'low':'med',tc:n.tc,
+        title:'Lam of Allah (light)',
+        text:bad?'The lam of Allah sounds heavy here (second formant '+Math.round(f.F2)+' Hz, '+Math.round(drop)+' Hz below your light vowels). After a kasra it must be thin.':
+          'Lam sounds light, as it should after a kasra.',
+        meas:Math.round(f.F2)+' Hz (light base '+Math.round(b)+')',exp:'same as light vowels'});
+      if(bad)n.status='bad';
+    }
+  }
+  /* izhar: a clear mim/nun must stay short, no ghunnah */
+  for(const m of matched){
+    if(!/izhar/.test(m.e.x))continue;
+    const d=murmurAfter(P,m.n.t1),meas=d/u,bad=meas>1.8*tol;
+    addEv({wi:m.e.wi,kind:'nasal',rule:'IZHAR_SHAFAWI',status:bad?(m.conf==='low'?'unsure':'bad'):'ok',conf:m.conf==='low'?'low':'med',tc:m.n.tc,
+      title:'Clear mim (izhar), no ghunnah',
+      text:bad?'The nasal sound after this vowel lasted about '+meas.toFixed(1)+' counts. With izhar the mim must be clear and short, with no ghunnah.':
+        'Nasal sound is short ('+meas.toFixed(1)+' counts), as izhar requires.',
+      meas:meas.toFixed(1)+' counts',exp:'at most 1 count'});
+    if(bad)m.n.status='bad';
+  }
+  if(lowQ){out.status='lowquality';}
+  return out;
+}
+function ruleOfVowel(e){
+  if(e.c>=6)return 'MADD_LAZIM';
+  if(/arid/.test(e.x))return 'MADD_ARID';
+  return 'MADD_ASLI';
+}
+
+/* ---- Qalqalah (echo on ق ط ب ج د sakinah). Fatihah has none; ready for other surahs. ---- */
+function detectQalqalah(snd,f0,f1){
+  const dB=snd.F.dB,hi=snd.F.hi;
+  let best={found:false,rise:0};
+  for(let t=f0+3;t<=f1&&t+4<snd.nF;t++){
+    let closure=0;for(let k=t;k>=f0&&dB[k]<dB[t]+3;k--)closure++;
+    let pk=t,pv=-1e9;for(let k=t+1;k<=t+4;k++)if(dB[k]>pv){pv=dB[k];pk=k;}
+    const rise=pv-dB[t];
+    if(closure>=3&&rise>=10&&hi[pk]>=0.3&&rise>best.rise)best={found:true,rise,closureMs:closure*10,hiRatio:hi[pk]};
+  }
+  return best;
+}
+if(typeof module!=='undefined')module.exports={Sound,analyzeSound,prepareFrames,detectNuclei,buildExpected,VW,detectQalqalah,lpcFormants,SRATE,HOP,WIN,median,percentile};
+
+/* ---------- App ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
+const arNum=n=>String(n).replace(/\d/g,d=>AR_DIGITS[d]);
+const pad3=n=>String(n).padStart(3,'0');
+
+const WORDS=[];
+SURAH.forEach(a=>a.words.forEach((w,p)=>WORDS.push({...w,ayah:a.n,pos:p+1,key:key(w.t)})));
+
+let sel=[];
+let listening=false,recog=null,committed=[],current=[],finishTimer=null;
+let lastRes=null,textMist=[],soundMist=[],mistakes=[],focus=null,judged=0;
+const beeped=new Set();
+let audioCtx=null,audioEl=null,audioNote='',playMaskStart=null,ownAudio=null;
+/* sound capture / analysis state */
+let snd=null,capCtx=null,capStream=null,capNode=null,pcmChunks=[],sndTimer=null,soundOut=null,sndSeen=new Map(),capNote='';
+
+let micOn=true;
+const OPENED_LOCAL=!/^https:$/.test(location.protocol)&&!/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+function initSelects(){
+  for(let i=1;i<=7;i++){
+    $('from').add(new Option('Ayah '+i,i));
+    $('to').add(new Option('Ayah '+i,i));
+  }
+  $('from').value=1;$('to').value=7;
+}
+function buildSel(){
+  const f=+$('from').value;let t=+$('to').value;
+  if(t<f){t=f;$('to').value=t;}
+  sel=WORDS.filter(w=>w.ayah>=f&&w.ayah<=t).map((w,i)=>({...w,i}));
+}
+function renderQuran(){
+  let html='',cur=0;
+  sel.forEach((w,i)=>{
+    if(w.ayah!==cur){if(cur)html+='</div>';html+='<div class="ayah">';cur=w.ayah;}
+    html+=`<span class="w" data-i="${i}" tabindex="0">${w.t}</span>`;
+    const next=sel[i+1];
+    if(!next||next.ayah!==w.ayah)html+=`<span class="end">﴿${arNum(w.ayah)}﴾</span>`;
+  });
+  html+='</div>';
+  $('quran').innerHTML=html;
+}
+function setPill(text,live){const p=$('statePill');p.textContent=text;p.className='pill'+(live?' live':'');}
+
+function beep(){
+  if(!$('beepOn').checked)return;
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime;
+    o.type='sine';o.frequency.value=880;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.28,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.32);
+    o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+0.34);
+    if(snd&&listening)snd.mask(snd.tNow()-0.05,snd.tNow()+0.55);   // keep the beep out of the analysis
+  }catch(e){}
+}
+
+function thrValue(){return {strict:.85,normal:.7,lenient:.55}[$('sens').value];}
+function tolValue(){return {strict:.8,normal:1,lenient:1.3}[$('sens').value];}
+
+/* ---------- word-level (text) analysis ---------- */
+function update(rawTokens,isFinal){
+  $('heard').textContent=rawTokens.join(' ');
+  if(!rawTokens.length){lastRes=null;textMist=[];judged=0;rebuildMistakes();return;}
+  const res=align(sel.map(w=>w.key),rawTokens.map(key),rawTokens,thrValue());
+  lastRes=res;
+  judged=isFinal?res.end:Math.max(0,res.end-1);
+  textMist=[];
+  res.status.forEach((s,i)=>{
+    if(i<judged&&(s==='sub'||s==='del'))textMist.push({idx:i,type:s,heard:res.heard[i]||''});
+  });
+  if($('extras').checked){
+    res.extras.forEach(e=>{
+      if(e.after<judged&&e.tok.length>1)textMist.push({idx:Math.max(e.after,0),type:'extra',heard:e.tok});
+    });
+  }
+  rebuildMistakes();
+}
+const mId=m=>m.type+':'+m.idx+':'+(m.kind||'');
+function rebuildMistakes(){
+  mistakes=textMist.concat(soundMist).sort((a,b)=>a.idx-b.idx||((a.type==='snd')-(b.type==='snd')));
+  let newest=null;
+  mistakes.forEach(m=>{const id=mId(m);if(!beeped.has(id)){beeped.add(id);newest=m;}});
+  if(newest){
+    if(newest.type!=='snd'||$('beepSnd').checked)beep();
+    focus={idx:newest.idx,mistake:newest};
+  }else if(focus&&focus.mistake){
+    const still=mistakes.find(m=>mId(m)===mId(focus.mistake));
+    if(!still)focus=null;else focus.mistake=still;
+  }
+  paint();
+}
+
+function paint(){
+  const spans=$('quran').querySelectorAll('.w');
+  const res=lastRes;
+  const sndWords=new Set(soundMist.map(m=>m.idx));
+  spans.forEach((el,i)=>{
+    let cls='w';
+    if(res){
+      const s=res.status[i];
+      if(i<judged){
+        if(s==='ok')cls+=' ok';
+        else if(s==='sub')cls+=' bad';
+        else if(s==='del')cls+=' bad skipped';
+      }else if(i<res.end){cls+=' seen';}
+      if(i===res.end)cls+=' cur';
+    }else if(i===0&&(listening||current.length||committed.length))cls+=' cur';
+    if(sndWords.has(i)&&cls.indexOf(' bad')<0)cls+=' snd';
+    if(focus&&focus.idx===i)cls+=' focus';
+    el.className=cls;
+  });
+  const okCount=res?res.status.slice(0,judged).filter(s=>s==='ok').length:0;
+  const done=res?Math.min(judged,sel.length):0;
+  const nT=textMist.length,nS=soundMist.length;
+  $('sum').innerHTML=`<span><b>${done}</b> / ${sel.length} words checked</span><span><b>${okCount}</b> read correctly</span><span><b style="color:${nT?'var(--err)':'inherit'}">${nT}</b> word mistake${nT===1?'':'s'}</span><span><b style="color:${nS?'var(--err)':'inherit'}">${nS}</b> sound mistake${nS===1?'':'s'}</span>`;
+  renderPanel();
+  renderSoundCard();
+}
+
+/* ---------- reciter audio ---------- */
+function ayahUrl(a){return `https://everyayah.com/data/${$('reciter').value}/001${pad3(a)}.mp3`;}
+function wordUrl(a,p){return `https://audio.qurancdn.com/wbw/001_${pad3(a)}_${pad3(p)}.mp3`;}
+function endPlaybackMask(){
+  if(snd&&listening&&playMaskStart!==null)snd.mask(playMaskStart,snd.tNow()+0.35);
+  playMaskStart=null;
+}
+function playUrl(url,rate){
+  try{if(audioEl){audioEl.pause();}}catch(e){}
+  endPlaybackMask();
+  audioNote='';
+  audioEl=new Audio(url);
+  audioEl.playbackRate=rate||1;
+  audioEl.onerror=()=>{audioNote='Could not load this clip (check your internet connection, or try another reciter).';const n=$('audioNote');if(n)n.textContent=audioNote;};
+  audioEl.onended=endPlaybackMask;audioEl.onpause=endPlaybackMask;
+  if(snd&&listening)playMaskStart=snd.tNow();
+  audioEl.play().catch(()=>{});
+}
+
+/* ---------- panel ---------- */
+function ruleHTML(r){
+  const d=RULES[r.k];
+  return `<div class="rule"><b>${d[0]}</b><p>${d[1]}${r.x?` <span class="x">- ${esc(r.x)}</span>`:''}</p></div>`;
+}
+function mistakeText(m,w){
+  if(m.type==='sub')return `The recognizer heard <b class="ar" style="font-family:'Amiri Quran',serif;font-size:1.15rem">${esc(m.heard)}</b> but the text here is <b>${esc(w.tr)}</b>.`;
+  if(m.type==='del')return `This word was skipped: <b>${esc(w.tr)}</b>. Read every word before moving on.`;
+  if(m.type==='snd')return `<b>${esc(m.ev.title)}</b>: ${esc(m.ev.text)}`;
+  return `An extra word <b style="font-family:'Amiri Quran',serif;font-size:1.15rem">${esc(m.heard)}</b> was heard after <b>${esc(w.tr)}</b>.`;
+}
+const TIPS={
+  madd:'Hold the vowel steadily for the exact number of counts (tap one beat per count). Compare with the reciter clip, then try again at the slow speed.',
+  heavy:'Raise the back of the tongue toward the soft palate and keep the mouth round and full on this letter. Listen for the fuller, deeper sound in the clip.',
+  lam:'Keep the lam of Allah thin: tongue tip forward on the gum ridge, back of the tongue down.',
+  nasal:'Close the lips on the mim briefly and release at once. No humming and no extra nasal sound (no ghunnah) with izhar.'
+};
+function detailHTML(){
+  if(!focus)return `<p class="muted">Press <b>Start reciting</b> and read from the beginning of the selected range. Wrong or skipped words, and sound mistakes (madd length, heavy letters, ghunnah on a clear mim), turn red with a beep, and the details and a reciter clip appear here. Click any word for its tajweed notes.</p>`;
+  const w=sel[focus.idx];const m=focus.mistake;
+  let h='';
+  let rules=w.r;
+  if(m){
+    const k=mistakes.findIndex(x=>mId(x)===mId(m))+1;
+    h+=`<h2>${m.type==='snd'?'Sound mistake':'Mistake'} ${k} of ${mistakes.length} - ayah ${w.ayah}, word ${w.pos}</h2>`;
+    h+=`<div class="big">${w.t}</div>`;
+    h+=`<p style="margin:4px 0 8px">${mistakeText(m,w)}</p>`;
+    if(m.type==='snd'){
+      h+=`<div class="kv"><span>Measured</span><b>${esc(m.ev.meas)}</b><span>Expected</span><b>${esc(m.ev.exp)}</b><span>Confidence</span><b>${esc(m.ev.conf)}</b></div>`;
+      if(m.ev.rule)rules=[R(m.ev.rule)].concat(w.r.filter(r=>r.k!==m.ev.rule));
+    }
+  }else{
+    h+=`<h2>Word notes - ayah ${w.ayah}, word ${w.pos}</h2>`;
+    h+=`<div class="big">${w.t}</div><div class="muted">${esc(w.tr)}</div>`;
+  }
+  h+=`<div class="muted" style="margin-top:8px">${m?'Tajweed rules to check on this word':'Tajweed rules on this word'}</div>`;
+  h+=rules.map(ruleHTML).join('');
+  h+=`<div class="row">
+    <button data-act="word">Hear this word</button>
+    <button data-act="ayah">Hear the ayah</button>
+    <label class="field" style="flex-direction:row;align-items:center;gap:6px">Speed
+      <select id="rate"><option value="1">1x</option><option value="0.75">0.75x</option><option value="0.5">0.5x</option></select></label>
+  </div><div class="audioerr" id="audioNote">${esc(audioNote)}</div>`;
+  if(m){
+    const tip=m.type==='snd'?TIPS[m.ev.kind]:'Repeat the word slowly, applying the rules above.';
+    h+=`<div class="muted" style="margin-top:6px">How to correct it</div>
+    <ol class="steps"><li>Listen to the reciter and notice how this is pronounced.</li><li>${esc(tip)}</li><li>Read the whole ayah again.</li></ol>
+    <div class="row"><button data-act="retry">Practice ayah ${w.ayah} again</button></div>`;
+  }
+  return h;
+}
+function renderPanel(){
+  let h='';
+  if(mistakes.length){
+    h+=`<h2>Mistakes (${mistakes.length})</h2><div class="mlist">`;
+    mistakes.forEach((m,n)=>{
+      const w=sel[m.idx];
+      const on=focus&&focus.mistake&&mId(focus.mistake)===mId(m);
+      const label=m.type==='sub'?'wrong word':m.type==='del'?'skipped':m.type==='snd'?m.ev.title:'extra word';
+      h+=`<button class="mitem${on?' on':''}" data-act="pick" data-n="${n}"><span class="ar">${w.t}</span><span><b>${esc(w.tr)}</b> <small>ayah ${w.ayah} - ${esc(label)}</small></span></button>`;
+    });
+    h+='</div>';
+  }
+  h+=detailHTML();
+  const prevRate=$('rate')?$('rate').value:'1';
+  $('panel').innerHTML=h;
+  if($('rate'))$('rate').value=prevRate;
+}
+
+$('panel').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const act=b.dataset.act;
+  if(act==='pick'){const m=mistakes[+b.dataset.n];focus={idx:m.idx,mistake:m};paint();return;}
+  if(!focus)return;
+  const w=sel[focus.idx];const rate=+($('rate')?$('rate').value:1);
+  if(act==='word')playUrl(wordUrl(w.ayah,w.pos),rate);
+  if(act==='ayah')playUrl(ayahUrl(w.ayah),rate);
+  if(act==='retry'){
+    hardStop();
+    $('from').value=w.ayah;$('to').value=w.ayah;
+    resetSession();
+  }
+});
+$('quran').addEventListener('click',e=>{
+  const s=e.target.closest('.w');if(!s)return;
+  const i=+s.dataset.i;
+  const m=mistakes.find(x=>x.idx===i)||null;
+  focus={idx:i,mistake:m};paint();
+});
+
+/* ---------- microphone capture (for sound analysis) ---------- */
+function makeResampler(inRate){
+  const ratio=inRate/SRATE,w=Math.max(1,Math.round(ratio));
+  let p=0,tail=new Float32Array(0);
+  return x=>{
+    const buf=new Float32Array(tail.length+x.length);buf.set(tail);buf.set(x,tail.length);
+    const out=[];
+    while(Math.floor(p)+1<buf.length){
+      const i=Math.floor(p);let a=0,c=0;
+      for(let k=0;k<w&&i-k>=0;k++){a+=buf[i-k];c++;}
+      out.push(a/c);p+=ratio;
+    }
+    const from=Math.max(0,Math.floor(p)-w);
+    tail=buf.slice(from);p-=from;
+    return Float32Array.from(out);
+  };
+}
+async function startCapture(){
+  capNote='';snd=new Sound();pcmChunks=[];
+  try{
+    capStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1}});
+  }catch(e){
+    capNote='Microphone recording is not available ('+(e&&e.name?e.name:'error')+'), so sound analysis is off. Word checking still works.';
+    snd=null;renderSoundCard();return false;
+  }
+  capCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const src=capCtx.createMediaStreamSource(capStream);
+  const resample=makeResampler(capCtx.sampleRate);
+  capNode=capCtx.createScriptProcessor(4096,1,1);
+  const mine=snd;
+  capNode.onaudioprocess=e=>{
+    if(snd!==mine)return;
+    const out=resample(e.inputBuffer.getChannelData(0));
+    if(out.length){snd.push(out);pcmChunks.push(out);}
+  };
+  const mute=capCtx.createGain();mute.gain.value=0;
+  src.connect(capNode);capNode.connect(mute);mute.connect(capCtx.destination);
+  return true;
+}
+function stopCapture(){
+  try{if(capNode){capNode.onaudioprocess=null;capNode.disconnect();}}catch(e){}
+  try{if(capStream)capStream.getTracks().forEach(t=>t.stop());}catch(e){}
+  try{if(capCtx)capCtx.close();}catch(e){}
+  capNode=null;capStream=null;capCtx=null;
+}
+function wavBlob(){
+  let L=0;for(const c of pcmChunks)L+=c.length;
+  const buf=new ArrayBuffer(44+L*2),v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+L*2,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,SRATE,true);v.setUint32(28,SRATE*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,L*2,true);
+  let o=44;for(const c of pcmChunks)for(let i=0;i<c.length;i++){const s=Math.max(-1,Math.min(1,c[i]));v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true);o+=2;}
+  return new Blob([buf],{type:'audio/wav'});
+}
+function download(name,blob){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+
+/* ---------- sound analysis ---------- */
+function sndLimit(final){
+  if(lastRes)return final?lastRes.end:Math.max(0,lastRes.end-1);
+  return final?sel.length:0;
+}
+function runSound(final){
+  if(!snd||!$('soundOn').checked)return;
+  const limit=sndLimit(final);
+  if(limit<3){soundOut={status:'waiting',events:[],nuclei:[],u:NaN,quality:0};renderSoundCard();return;}
+  let out;
+  try{out=analyzeSound(snd,sel,limit,{final,tol:tolValue()});}
+  catch(err){capNote='Sound analysis error: '+err.message;renderSoundCard();return;}
+  soundOut=out;
+  const seen=new Map(),list=[];
+  if(out.status==='ok'){
+    for(const ev of out.events){
+      if(ev.status!=='bad')continue;
+      const id=ev.wi+':'+ev.kind+':'+ev.title;
+      const c=(sndSeen.get(id)||0)+1;seen.set(id,c);
+      if(final||c>=2)list.push({idx:ev.wi,type:'snd',kind:ev.kind+':'+ev.title,ev,heard:''});
+    }
+  }
+  sndSeen=seen;soundMist=list;
+  rebuildMistakes();
+}
+function soundStatusText(){
+  if(capNote)return capNote;
+  if(!$('soundOn').checked)return 'Sound analysis is switched off.';
+  if(!snd)return 'No recording yet. Press Start reciting and allow the microphone.';
+  const o=soundOut;
+  if(!o)return 'Recording... sound rules are checked every 2 seconds once a few words have been read.';
+  if(o.status==='waiting')return 'Waiting for a few words to be read before checking sound rules.';
+  if(o.status==='insufficient')return 'Not enough clear voiced speech detected yet. Check the microphone level, speak closer, and reduce background noise.';
+  const u=isFinite(o.u)?`1 count is about ${Math.round(o.u*1000)} ms in your recitation (measured from your short vowels). `:'';
+  if(o.status==='lowquality')return u+`Your recording could only be matched to the text at ${Math.round(o.quality*100)}%, which is too low to judge sound rules. Measurements are shown but no sound mistakes are flagged.`;
+  return u+`Recording matched the text at ${Math.round(o.quality*100)}%.`;
+}
+const VERDICT={ok:'<span style="color:var(--ok)">ok</span>',bad:'<span style="color:var(--err)"><b>mistake</b></span>',unsure:'<span class="muted">unsure</span>'};
+function renderSoundCard(){
+  const box=$('soundStatus');if(!box)return;
+  box.textContent=soundStatusText();
+  const o=soundOut;
+  const rows=(o&&o.events?o.events.slice().sort((a,b)=>a.wi-b.wi):[]).map(ev=>{
+    const w=sel[ev.wi];if(!w)return'';
+    return `<tr data-wi="${ev.wi}"><td class="ar">${w.t}</td><td>${esc(w.tr)}</td><td>${esc(ev.title)}</td><td>${esc(String(ev.meas))}</td><td>${esc(String(ev.exp))}</td><td>${VERDICT[ev.status]||''}</td></tr>`;
+  }).join('');
+  $('soundRows').innerHTML=rows||'<tr><td colspan="6" class="muted">No measurements yet.</td></tr>';
+  const has=pcmChunks.length>0;
+  $('btnPlayOwn').disabled=!has;$('btnWav').disabled=!has;$('btnJson').disabled=!o||!o.P;
+  drawTimeline();
+}
+function drawTimeline(){
+  const cv=$('tl');if(!cv)return;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(!W||!H)return;
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  if(!snd||snd.nF<20||!soundOut||!soundOut.P){
+    g.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#888';
+    g.font='12px Inter,sans-serif';g.fillText('Your recording will appear here.',10,H/2);return;
+  }
+  const css=getComputedStyle(document.documentElement);
+  const col=n=>css.getPropertyValue(n).trim();
+  const T=snd.nF,dB=snd.F.dB,P=soundOut.P;
+  const lo=P.floor-2,hi=P.peak+3,top=14,bot=H-16;
+  g.strokeStyle=col('--muted');g.lineWidth=1;g.beginPath();
+  for(let x=0;x<W;x++){
+    const t=Math.min(T-1,Math.floor(x/W*T));
+    const v=Math.max(0,Math.min(1,(dB[t]-lo)/(hi-lo)));
+    const y=bot-v*(bot-top);
+    if(x===0)g.moveTo(x,y);else g.lineTo(x,y);
+  }
+  g.stroke();
+  const u=soundOut.u;
+  g.font='10px Inter,sans-serif';g.textAlign='center';
+  for(const n of soundOut.nuclei){
+    const x0=n.t0/T*W,x1=(n.t1+1)/T*W;
+    const c=n.status==='bad'?col('--err'):(n.status==='ok'?col('--ok'):col('--muted'));
+    g.fillStyle=c+'44';g.fillRect(x0,top,Math.max(1.5,x1-x0),bot-top);
+    if(n.e&&n.e.c>=2&&isFinite(u)){
+      g.fillStyle=c;g.fillText(((n.dur+EDGE_L)/(u+EDGE_L)).toFixed(1),(x0+x1)/2,top-3);
+    }
+  }
+  g.fillStyle=col('--muted');g.textAlign='left';
+  const secs=T*FRAME_S;
+  for(let s=0;s<=secs;s+=Math.max(1,Math.ceil(secs/10))){g.fillText(s+'s',s/secs*W+2,H-3);}
+}
+$('soundCard').addEventListener('click',e=>{
+  const b=e.target.closest('button');
+  if(b){
+    if(b.id==='btnPlayOwn'&&pcmChunks.length){
+      try{if(ownAudio)ownAudio.pause();}catch(x){}
+      ownAudio=new Audio(URL.createObjectURL(wavBlob()));ownAudio.play().catch(()=>{});
+    }
+    if(b.id==='btnWav'&&pcmChunks.length)download('recitation.wav',wavBlob());
+    if(b.id==='btnJson'&&soundOut&&soundOut.P){
+      const r1=a=>Array.from(a,v=>Math.round(v*10)/10);
+      const data={note:'Tajweed Coach sound-analysis export for tuning',unit_ms:soundOut.u*1000,quality:soundOut.quality,
+        range:[+$('from').value,+$('to').value],events:soundOut.events,
+        nuclei:soundOut.nuclei.map(n=>({t0:n.t0*FRAME_S,t1:(n.t1+1)*FRAME_S,dur:n.dur,pauseAfter:n.pauseAfter,status:n.status||null,word:n.e?n.e.wi:null})),
+        frames:{hop_s:FRAME_S,dB:r1(snd.F.dB),voicing:Array.from(snd.F.v,v=>Math.round(v*100)/100),lowRatio:r1(snd.F.R)}};
+      download('tajweed-analysis.json',new Blob([JSON.stringify(data)],{type:'application/json'}));
+    }
+    return;
+  }
+  const tr=e.target.closest('tr[data-wi]');
+  if(tr){const i=+tr.dataset.wi;focus={idx:i,mistake:mistakes.find(x=>x.idx===i)||null};paint();}
+});
+
+/* ---------- speech recognition + session flow ---------- */
+function startListening(){
+  if(!micOn){showBanner('The microphone switch is off. Turn it on to start reciting.');return;}
+  const mode=$('mode').value;
+  if(mode!=='sound'&&!SR){showBanner('Word checking needs Chrome or Edge (Web Speech API). Switch Mode to "Sound only", or use Chrome on Android.');return;}
+  resetSession(true);
+  listening=true;
+  $('btnStart').textContent='Stop';$('btnStart').classList.add('live');
+  setPill(mode==='sound'?'Recording...':'Listening...',true);
+  wakeLock();
+  if(mode==='words'){$('soundOn').checked=false;}
+  else $('soundOn').checked=true;
+  if(mode!=='sound')launch();
+  if(mode!=='words')startCapture().then(()=>renderSoundCard());
+  sndTimer=setInterval(()=>{if(mode!=='sound')runSound(false);},2000);
+}
+function launch(){
+  recog=new SR();
+  recog.lang='ar-SA';recog.continuous=true;recog.interimResults=true;recog.maxAlternatives=1;
+  recog.onresult=e=>{
+    const parts=[];
+    for(let k=0;k<e.results.length;k++)parts.push(e.results[k][0].transcript.trim());
+    /* Android Chrome can return each result as the full cumulative text so far: keep only the longest of such prefixes */
+    const keep=[];
+    for(let k=0;k<parts.length;k++){
+      const nx=parts[k+1];
+      if(nx&&parts[k]&&nx.indexOf(parts[k])===0)continue;
+      keep.push(parts[k]);
+    }
+    current=keep.join(' ').split(/\s+/).filter(Boolean);
+    const lastFinal=e.results[e.results.length-1].isFinal;
+    update(committed.concat(current),lastFinal);
+  };
+  recog.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+      showBanner(OPENED_LOCAL?'Chrome blocks the microphone for pages opened from a file or WhatsApp (content://). Use "Analyze a recording" below instead: it needs no microphone permission. For live listening, open this page from an https:// link.':'Microphone access was blocked. Tap the lock icon in the address bar, then Permissions, then Microphone, and choose Allow.');
+      hardStop();
+    }else if(e.error==='audio-capture'){
+      showBanner('The phone would not share the microphone with both checkers at once. Change Mode to "Words only" or "Sound only" and try again.');
+      hardStop();
+    }else if(e.error==='network'){
+      showBanner('Chrome\'s speech service could not be reached. Check your internet connection.');
+    }
+  };
+  recog.onend=()=>{
+    if(!listening)return;
+    committed=committed.concat(current);current=[];
+    try{launch();}catch(err){}
+  };
+  try{recog.start();}catch(err){}
+}
+let wl=null;
+async function wakeLock(){try{if(navigator.wakeLock)wl=await navigator.wakeLock.request('screen');}catch(e){}}
+function stopListening(){
+  if(!listening)return;
+  listening=false;
+  clearInterval(sndTimer);try{if(wl)wl.release();}catch(e){}
+  try{if(recog){recog.onend=null;recog.stop();}}catch(e){}
+  $('btnStart').disabled=true;setPill('Finishing...',false);
+  finishTimer=setTimeout(()=>{
+    committed=committed.concat(current);current=[];
+    update(committed,true);
+    runSound(true);
+    stopCapture();
+    $('btnStart').disabled=false;$('btnStart').textContent='Start reciting';$('btnStart').classList.remove('live');
+    setPill('Idle',false);
+  },700);
+}
+function hardStop(){
+  listening=false;clearInterval(sndTimer);clearTimeout(finishTimer);
+  try{if(recog){recog.onend=null;recog.stop();}}catch(e){}
+  stopCapture();
+  $('btnStart').disabled=false;$('btnStart').textContent='Start reciting';$('btnStart').classList.remove('live');
+  setPill('Idle',false);
+}
+function showBanner(t){const b=$('banner');b.textContent=t;b.style.display='block';}
+function hideBanner(){$('banner').style.display='none';}
+function resetSession(keepListening){
+  if(!keepListening){hardStop();snd=null;pcmChunks=[];}
+  committed=[];current=[];lastRes=null;textMist=[];soundMist=[];mistakes=[];focus=null;judged=0;beeped.clear();
+  soundOut=null;sndSeen=new Map();capNote='';
+  hideBanner();
+  buildSel();renderQuran();
+  $('heard').textContent='';
+  paint();
+}
+
+$('btnStart').addEventListener('click',()=>{listening?stopListening():startListening();});
+$('btnReset').addEventListener('click',()=>resetSession());
+$('from').addEventListener('change',()=>resetSession());
+$('to').addEventListener('change',()=>resetSession());
+const refresh=()=>{if(committed.length||current.length){update(committed.concat(current),!listening);if(snd&&!listening)runSound(true);}};
+$('sens').addEventListener('change',refresh);
+$('extras').addEventListener('change',refresh);
+$('btnCheck').addEventListener('click',()=>{
+  const toks=$('typed').value.split(/\s+/).filter(Boolean);
+  hardStop();
+  beeped.clear();focus=null;soundMist=[];soundOut=null;
+  committed=toks;current=[];
+  update(toks,true);
+});
+window.addEventListener('resize',drawTimeline);
+
+initSelects();
+resetSession();
+if(!SR)showBanner('Live listening needs Chrome or Edge (Web Speech API). You can still test with the typed box below.');
+
+
+/* ---------- in-app microphone switch ---------- */
+function micSave(v){try{localStorage.setItem('tc_mic',v?'1':'0');}catch(e){}}
+function micLoad(){try{return localStorage.getItem('tc_mic')!=='0';}catch(e){return true;}}
+const SECURE=window.isSecureContext&&!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+function micRender(perm){
+  const sw=$('micSwitch');sw.checked=micOn;
+  $('micLabel').textContent=micOn?'Microphone: On':'Microphone: Off';
+  let t='';
+  if(!SECURE)t='This page is not on a secure address (https://), so Chrome will not even offer the microphone. Open it from the https link, not from a downloaded file or an http:// address.';
+  else if(!micOn)t='Off: the app will not listen or record. Turn it on to practise.';
+  else if(perm==='granted')t='Chrome has allowed this page to use the microphone.';
+  else if(perm==='denied')t='Chrome is blocking the microphone for this page. Tap the lock icon in the address bar, then Permissions, then Microphone, and choose Allow.';
+  else t='Chrome will ask for permission the first time you start.';
+  $('micNote').textContent=t;
+}
+async function micPerm(){
+  try{const p=await navigator.permissions.query({name:'microphone'});p.onchange=()=>micRender(p.state);return p.state;}catch(e){return 'unknown';}
+}
+$('micSwitch').addEventListener('change',async()=>{
+  micOn=$('micSwitch').checked;micSave(micOn);
+  if(!micOn){
+    if(listening||finishTimer)hardStop();
+    micRender(await micPerm());return;
+  }
+  hideBanner();
+  micRender('unknown');
+  if(!SECURE){showBanner('Chrome only allows the microphone on https:// pages. This page was opened from a file or an insecure address, so no switch inside the page can enable it. Open the hosted https link instead.');return;}
+  /* ask Chrome for permission now, then release the mic straight away */
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({audio:true});
+    s.getTracks().forEach(t=>t.stop());
+  }catch(e){
+    showBanner('Chrome refused the microphone ('+(e&&e.name?e.name:'error')+'). A web page cannot override this. Tap the lock icon in the address bar, then Permissions, then Microphone, choose Allow, and switch this on again. If Android itself blocks Chrome: Settings, Apps, Chrome, Permissions, Microphone, Allow.');
+  }
+  micRender(await micPerm());
+});
+micPerm().then(micRender);
+
+micOn=micLoad();micRender('unknown');micPerm().then(micRender);
+
+
+/* ---------- analyze a recording (no microphone permission needed) ---------- */
+async function analyzeFile(file){
+  if(!file)return;
+  hardStop();resetSession(true);
+  $('soundOn').checked=true;
+  $('fileNote').textContent='Reading '+file.name+'...';
+  try{
+    const ab=await file.arrayBuffer();
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const buf=await new Promise((res,rej)=>ctx.decodeAudioData(ab,res,rej));
+    ctx.close();
+    const ch=buf.numberOfChannels,n=buf.length,mono=new Float32Array(n);
+    for(let c=0;c<ch;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)mono[i]+=d[i]/ch;}
+    const rs=makeResampler(buf.sampleRate);
+    snd=new Sound();pcmChunks=[];capNote='';
+    const step=buf.sampleRate;
+    for(let i=0;i<n;i+=step){const o=rs(mono.subarray(i,Math.min(n,i+step)));if(o.length){snd.push(o);pcmChunks.push(o);}}
+    $('fileNote').textContent='Analyzed '+file.name+' ('+buf.duration.toFixed(1)+' s). Results are below; the whole selected range is assumed to be recited.';
+    lastRes=null;runSound(true);renderSoundCard();
+    $('soundCard').scrollIntoView({behavior:'smooth'});
+  }catch(e){
+    $('fileNote').textContent='Could not read that audio file ('+(e&&e.message?e.message:'unsupported format')+'). Try a normal voice recording (m4a, mp3, wav, ogg).';
+  }
+}
+['fileRec','filePick'].forEach(id=>$(id).addEventListener('change',e=>{analyzeFile(e.target.files[0]);e.target.value='';}));
+
+</script>
+</body>
+</html>
